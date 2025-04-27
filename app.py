@@ -7,7 +7,6 @@ from startpage import StartPage
 from needleman_wunsch import PageOne
 from smith_waterman import PageTwo
 
-
 class AlgorithmApp(tk.Tk):
     """
     Main application class that contains the frame container and
@@ -17,7 +16,7 @@ class AlgorithmApp(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.title("Sequence Alignment Visualization Tool")
-        self.geometry("800x800")
+        self.geometry("1000x700")
 
         # The container is where we'll stack frames on top of each other
         container = tk.Frame(self)
