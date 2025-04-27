@@ -3,8 +3,7 @@ Needleman-Wunsch algorithm implementation for sequence alignment visualization
 """
 
 import tkinter as tk
-from tkinter import Frame, Label, Entry, Button
-
+from tkinter import Frame, Label, Entry, Button, StringVar, IntVar
 
 class PageOne(tk.Frame):
     """
@@ -40,47 +39,140 @@ class PageOne(tk.Frame):
         # Store frame1 as an instance variable for later use
         self.frame1 = frame1
 
+        # Create title for the algorithm page
+        algorithm_title = Label(frame2, text="Needleman-Wunsch Algorithm", font=("Helvetica", 14, "bold"))
+        algorithm_title.grid(row=0, column=0, columnspan=4, pady=10)
+
+        # Create description
+        desc = Label(frame2, text="Global sequence alignment algorithm", font=("Helvetica", 10, "italic"))
+        desc.grid(row=1, column=0, columnspan=4)
+
         # Create input UI elements
         label1 = Label(frame2, text="Sequence 1")
-        entry1 = Entry(frame2)
+        self.entry1_var = StringVar()
+        entry1 = Entry(frame2, textvariable=self.entry1_var)
+
         label2 = Label(frame2, text="Sequence 2")
-        entry2 = Entry(frame2)
-        label3 = Label(frame2, text="Gap/Mismatch Penalty")
-        entry3 = Entry(frame2)
+        self.entry2_var = StringVar()
+        entry2 = Entry(frame2, textvariable=self.entry2_var)
+
+        # Enhanced scoring parameters section with separate controls
+        scoring_label = Label(frame2, text="Scoring Parameters:", font=("Helvetica", 10, "bold"))
+
+        match_label = Label(frame2, text="Match Reward")
+        self.match_var = IntVar(value=1)
+        match_entry = Entry(frame2, textvariable=self.match_var, width=5)
+
+        mismatch_label = Label(frame2, text="Mismatch Penalty")
+        self.mismatch_var = IntVar(value=-1)
+        mismatch_entry = Entry(frame2, textvariable=self.mismatch_var, width=5)
+
+        gap_label = Label(frame2, text="Gap Penalty")
+        self.gap_var = IntVar(value=-1)
+        gap_entry = Entry(frame2, textvariable=self.gap_var, width=5)
 
         # Position input UI elements
-        label1.grid(row=0, column=0)
-        entry1.grid(row=0, column=1)
-        label2.grid(row=1, column=0)
-        entry2.grid(row=1, column=1)
-        label3.grid(row=2, column=0)
-        entry3.grid(row=2, column=1)
+        label1.grid(row=3, column=0, sticky="w", pady=5)
+        entry1.grid(row=3, column=1, columnspan=3, sticky="we", pady=5)
+
+        label2.grid(row=4, column=0, sticky="w", pady=5)
+        entry2.grid(row=4, column=1, columnspan=3, sticky="we", pady=5)
+
+        # Position scoring parameters
+        scoring_label.grid(row=5, column=0, columnspan=4, sticky="w", pady=(10, 5))
+
+        match_label.grid(row=6, column=0, sticky="w", pady=2)
+        match_entry.grid(row=6, column=1, sticky="w", pady=2)
+
+        mismatch_label.grid(row=7, column=0, sticky="w", pady=2)
+        mismatch_entry.grid(row=7, column=1, sticky="w", pady=2)
+
+        gap_label.grid(row=8, column=0, sticky="w", pady=2)
+        gap_entry.grid(row=8, column=1, sticky="w", pady=2)
+
+        # Add a scoring examples section
+        examples_label = Label(frame2, text="Example scoring schemes:", font=("Helvetica", 9))
+        examples_label.grid(row=9, column=0, columnspan=2, sticky="w", pady=(10, 0))
+
+        dna_button = Button(frame2, text="DNA", width=8,
+                          command=lambda: self.set_scoring_scheme(2, -1, -2))
+        dna_button.grid(row=10, column=0, sticky="w", pady=2)
+
+        protein_button = Button(frame2, text="BLOSUM62", width=8,
+                              command=lambda: self.set_scoring_scheme(1, -1, -1))
+        protein_button.grid(row=10, column=1, sticky="w", pady=2)
+
+        custom_button = Button(frame2, text="Custom", width=8,
+                             command=lambda: self.set_scoring_scheme(5, -4, -8))
+        custom_button.grid(row=10, column=2, sticky="w", pady=2)
+
+        # Add a reset button
+        reset_button = Button(frame2, text="Reset", width=8,
+                            command=lambda: self.reset_form())
+        reset_button.grid(row=10, column=3, sticky="w", pady=2)
+
+        # Add explanation section
+        explanation = Label(frame2, text="Current scoring matrix: Match = +1, Mismatch = -1, Gap = -1",
+                         font=("Helvetica", 9))
+        explanation.grid(row=11, column=0, columnspan=4, sticky="w", pady=(10, 5))
+        self.explanation = explanation  # Save for later updates
 
         # Create label for displaying alignments
-        label = Label(frame2)
-        label.grid(row=4, column=1)
+        label = Label(frame2, font=("Courier", 10))
+        label.grid(row=13, column=0, columnspan=4, pady=10)
         self.label = label  # Store as instance variable
 
         # Create buttons
-        button1 = Button(frame2, text="Execute", width=10, command=lambda: self.initialize(entry1, entry2, entry3))
-        button1.grid(row=3, column=1)
+        button1 = Button(frame2, text="Execute", width=10,
+                       command=lambda: self.initialize())
+        button1.grid(row=12, column=0, columnspan=2, pady=10)
 
         button2 = Button(frame2, text="<", width=3, command=self.left_button)
-        button2.grid(row=3, column=2)
+        button2.grid(row=12, column=2, pady=10)
 
         button3 = Button(frame2, text=">", width=3, command=self.right_button)
-        button3.grid(row=3, column=3)
+        button3.grid(row=12, column=3, pady=10)
 
+        # Animation control buttons
         button4 = Button(frame2, text="<<", width=3, command=self.left_end_button)
-        button4.grid(row=4, column=2)
+        button4.grid(row=14, column=2, pady=5)
 
         button5 = Button(frame2, text=">>", width=3, command=self.right_end_button)
-        button5.grid(row=4, column=3)
+        button5.grid(row=14, column=3, pady=5)
 
         # Navigation button back to start page
         button = Button(frame2, text="Go to the start page",
-                        command=lambda: controller.show_frame("StartPage"))
-        button.grid(row=5, column=1)
+                      command=lambda: controller.show_frame("StartPage"))
+        button.grid(row=15, column=0, columnspan=4, pady=10)
+
+        # Store entry variables for later use
+        self.entry1 = entry1
+        self.entry2 = entry2
+        self.match_entry = match_entry
+        self.mismatch_entry = mismatch_entry
+        self.gap_entry = gap_entry
+
+    def set_scoring_scheme(self, match, mismatch, gap):
+        """Set a predefined scoring scheme"""
+        self.match_var.set(match)
+        self.mismatch_var.set(mismatch)
+        self.gap_var.set(gap)
+        self.update_explanation()
+
+    def reset_form(self):
+        """Reset the form to default values"""
+        self.entry1_var.set("")
+        self.entry2_var.set("")
+        self.match_var.set(1)
+        self.mismatch_var.set(-1)
+        self.gap_var.set(-1)
+        self.update_explanation()
+
+    def update_explanation(self):
+        """Update the explanation text based on current scoring parameters"""
+        text = f"Current scoring matrix: Match = +{self.match_var.get()}, "
+        text += f"Mismatch = {self.mismatch_var.get()}, Gap = {self.gap_var.get()}"
+        self.explanation.config(text=text)
 
     def zeros(self, rows, cols):
         """Create a matrix filled with zeros"""
@@ -112,16 +204,16 @@ class PageOne(tk.Frame):
         # Highlight the reference cell of the score
         if self.score[i][j] == match:
             e = Label(self.frame1, relief="solid", bd=1, fg="red")
-            e.config(text=str(self.score[i - 1][j - 1]))
+            e.config(text=str(self.score[i-1][j-1]))
             e.grid(row=i, column=j, sticky="nsew")
         if self.score[i][j] == delete:
             e = Label(self.frame1, relief="solid", bd=1, fg="red")
-            e.config(text=str(self.score[i - 1][j]))
-            e.grid(row=i, column=j + 1, sticky="nsew")
+            e.config(text=str(self.score[i-1][j]))
+            e.grid(row=i, column=j+1, sticky="nsew")
         if self.score[i][j] == insert:
             e = Label(self.frame1, relief="solid", bd=1, fg="red")
-            e.config(text=str(self.score[i][j - 1]))
-            e.grid(row=i + 1, column=j, sticky="nsew")
+            e.config(text=str(self.score[i][j-1]))
+            e.grid(row=i+1, column=j, sticky="nsew")
 
     def traceback(self):
         """Traceback to find the optimal alignment"""
@@ -146,7 +238,7 @@ class PageOne(tk.Frame):
                 self.align2 += '-'
                 e = Label(self.frame1, relief="solid", bd=1, bg="green")
                 e.config(text=str(score_up))
-                e.grid(row=self.i + 1, column=self.j, sticky="nsew")
+                e.grid(row=self.i+1, column=self.j, sticky="nsew")
                 self.j -= 1
                 self.label.config(text=self.align1[::-1] + '\n' + self.align2[::-1])
             elif score_current == score_left + self.gap_penalty:
@@ -154,25 +246,25 @@ class PageOne(tk.Frame):
                 self.align2 += self.seq2[self.i - 1]
                 e = Label(self.frame1, relief="solid", bd=1, bg="green")
                 e.config(text=str(score_left))
-                e.grid(row=self.i, column=self.j + 1, sticky="nsew")
+                e.grid(row=self.i, column=self.j+1, sticky="nsew")
                 self.i -= 1
                 self.label.config(text=self.align1[::-1] + '\n' + self.align2[::-1])
         elif self.j > 0:
-            score_current = self.score[self.i][self.j - 1]
+            score_current = self.score[self.i][self.j-1]
             self.align1 += self.seq1[self.j - 1]
             self.align2 += '-'
             e = Label(self.frame1, relief="solid", bd=1, bg="green")
             e.config(text=str(score_current))
-            e.grid(row=self.i + 1, column=self.j, sticky="nsew")
+            e.grid(row=self.i+1, column=self.j, sticky="nsew")
             self.j -= 1
             self.label.config(text=self.align1[::-1] + '\n' + self.align2[::-1])
         elif self.i > 0:
-            score_current = self.score[self.i - 1][self.j]
+            score_current = self.score[self.i-1][self.j]
             self.align1 += '-'
             self.align2 += self.seq2[self.i - 1]
             e = Label(self.frame1, relief="solid", bd=1, bg="green")
             e.config(text=str(score_current))
-            e.grid(row=self.i, column=self.j + 1, sticky="nsew")
+            e.grid(row=self.i, column=self.j+1, sticky="nsew")
             self.i -= 1
             self.label.config(text=self.align1[::-1] + '\n' + self.align2[::-1])
         else:
@@ -183,44 +275,44 @@ class PageOne(tk.Frame):
         score_current = self.score[self.i][self.j]
         if self.i < len(self.seq2) and self.j < len(self.seq1):
             if self.align2[-1] == '-':
-                self.align1 = self.align1[:len(self.align1) - 1]
-                self.align2 = self.align2[:len(self.align2) - 1]
+                self.align1 = self.align1[:len(self.align1)-1]
+                self.align2 = self.align2[:len(self.align2)-1]
                 e = Label(self.frame1, relief="solid", bd=1)
                 e.config(text=str(score_current))
-                e.grid(row=self.i + 1, column=self.j + 1, sticky="nsew")
+                e.grid(row=self.i+1, column=self.j+1, sticky="nsew")
                 self.j += 1
                 self.label.config(text=self.align1[::-1] + '\n' + self.align2[::-1])
             elif self.align1[-1] == '-':
-                self.align1 = self.align1[:len(self.align1) - 1]
-                self.align2 = self.align2[:len(self.align2) - 1]
+                self.align1 = self.align1[:len(self.align1)-1]
+                self.align2 = self.align2[:len(self.align2)-1]
                 e = Label(self.frame1, relief="solid", bd=1)
                 e.config(text=str(score_current))
-                e.grid(row=self.i + 1, column=self.j + 1, sticky="nsew")
+                e.grid(row=self.i+1, column=self.j+1, sticky="nsew")
                 self.i += 1
                 self.label.config(text=self.align1[::-1] + '\n' + self.align2[::-1])
             else:
-                self.align1 = self.align1[:len(self.align1) - 1]
-                self.align2 = self.align2[:len(self.align2) - 1]
+                self.align1 = self.align1[:len(self.align1)-1]
+                self.align2 = self.align2[:len(self.align2)-1]
                 e = Label(self.frame1, relief="solid", bd=1)
                 e.config(text=str(score_current))
-                e.grid(row=self.i + 1, column=self.j + 1, sticky="nsew")
+                e.grid(row=self.i+1, column=self.j+1, sticky="nsew")
                 self.i += 1
                 self.j += 1
                 self.label.config(text=self.align1[::-1] + '\n' + self.align2[::-1])
         elif self.j < len(self.seq1):
-            self.align1 = self.align1[:len(self.align1) - 1]
-            self.align2 = self.align2[:len(self.align2) - 1]
+            self.align1 = self.align1[:len(self.align1)-1]
+            self.align2 = self.align2[:len(self.align2)-1]
             e = Label(self.frame1, relief="solid", bd=1)
             e.config(text=str(score_current))
-            e.grid(row=self.i + 1, column=self.j + 1, sticky="nsew")
+            e.grid(row=self.i+1, column=self.j+1, sticky="nsew")
             self.j += 1
             self.label.config(text=self.align1[::-1] + '\n' + self.align2[::-1])
         elif self.i < len(self.seq2):
-            self.align1 = self.align1[:len(self.align1) - 1]
-            self.align2 = self.align2[:len(self.align2) - 1]
+            self.align1 = self.align1[:len(self.align1)-1]
+            self.align2 = self.align2[:len(self.align2)-1]
             e = Label(self.frame1, relief="solid", bd=1)
             e.config(text=str(score_current))
-            e.grid(row=self.i + 1, column=self.j + 1, sticky="nsew")
+            e.grid(row=self.i+1, column=self.j+1, sticky="nsew")
             self.i += 1
             self.label.config(text=self.align1[::-1] + '\n' + self.align2[::-1])
         else:
@@ -237,7 +329,7 @@ class PageOne(tk.Frame):
                 _list.extend(item.winfo_children())
         return _list
 
-    def initialize(self, entry1, entry2, entry3):
+    def initialize(self):
         """Initialize the algorithm with the input values"""
         self.index = 0
         self.index2 = 0
@@ -246,12 +338,14 @@ class PageOne(tk.Frame):
             item.grid_forget()
 
         # Get input values
-        self.seqA = entry1.get()
-        self.seqB = entry2.get()
-        self.seq1 = self.seqA.upper()
-        self.seq2 = self.seqB.upper()
-        self.gap_penalty = int(entry3.get())
-        self.mismatch_penalty = int(entry3.get())
+        self.seq1 = self.entry1_var.get().upper()
+        self.seq2 = self.entry2_var.get().upper()
+
+        # Get scoring parameters from the UI
+        self.match_award = self.match_var.get()
+        self.mismatch_penalty = self.mismatch_var.get()
+        self.gap_penalty = self.gap_var.get()
+
         self.n = len(self.seq1)
         self.m = len(self.seq2)
         self.i = self.m
@@ -265,12 +359,12 @@ class PageOne(tk.Frame):
         for i in range(len(self.seq1)):  # location seq1
             e = Label(self.frame1)
             e.config(text=self.seq1[i])
-            e.grid(row=0, column=i + 2)
+            e.grid(row=0, column=i+2)
 
         for i in range(len(self.seq2)):  # location seq2
             e = Label(self.frame1)
             e.config(text=self.seq2[i])
-            e.grid(row=i + 2, column=0)
+            e.grid(row=i+2, column=0)
 
         # Initialize scoring matrix
         for i in range(0, self.m + 1):
@@ -350,9 +444,9 @@ class PageOne(tk.Frame):
                 index = (row, column)
                 e = Label(self.frame1, relief="solid", bd=1)
                 e.config(text=str(score[row][column]))
-                e.grid(row=row + 1, column=column + 1, sticky="nsew")
+                e.grid(row=row+1, column=column+1, sticky="nsew")
                 entry[index] = e
-                # Highlight current cell
+        # Highlight current cell
         e = Label(self.frame1, relief="solid", bd=1, bg="yellow")
         e.config(text=str(score[self.index2][self.index]))
-        e.grid(row=self.index2 + 1, column=self.index + 1, sticky="nsew")
+        e.grid(row=self.index2+1, column=self.index+1, sticky="nsew")

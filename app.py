@@ -17,7 +17,7 @@ class AlgorithmApp(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.title("Sequence Alignment Visualization Tool")
-        self.geometry("800x600")
+        self.geometry("800x800")
 
         # The container is where we'll stack frames on top of each other
         container = tk.Frame(self)
